@@ -47,12 +47,12 @@ export const profileData = {
     },
     intro: [
       {
-        ko: "윤원길 변리사는 국내외 상표 및 디자인 업무를 중심으로 브랜드 보호 체계, 해외 출원, 국경조치, 심판 및 관련 행정 절차를 다뤄 온 실무가입니다.",
-        en: "Peter Won-Kil Yoon has built his practice around trademark and design work, including international prosecution, border measures, administrative appeals, and broader brand protection strategy.",
+        ko: "윤원길 변리사는 상표와 디자인을 중심으로 브랜드 보호 전략, 해외 출원, 국경조치, 심판 및 행정 대응을 폭넓게 수행해 온 지식재산 전문가입니다. 오랜 공공 실무와 민간 자문 경험을 바탕으로, 국내외 기업의 브랜드와 권리 보호를 위한 전략적 해법을 제시해 왔습니다.",
+        en: "Peter Won-Kil Yoon is an intellectual property professional whose work centers on trademarks and designs, with broad experience in brand protection strategy, international filing, border measures, and administrative appeals. Drawing on years in both public service and private advisory practice, he has advised on strategic approaches to protecting brands and IP rights across jurisdictions.",
       },
       {
-        ko: "1995년 특허청에서 공직 경력을 시작한 이후 WIPO와 국무총리실, 특허심판원, 그리고 김·장 법률사무소에서의 경험을 통해 정책, 국제협력, 심사·심판, 민간 자문을 아우르는 관점을 쌓아 왔습니다.",
-        en: "Since beginning public service at the Korean Intellectual Property Office in 1995, he has developed a perspective that bridges policy, international cooperation, examination and appeals, and private advisory work through roles at WIPO, the Prime Minister's Office, the Intellectual Property Tribunal, and Kim & Chang.",
+        ko: "1995년 특허청에서 시작된 커리어는 WIPO, 국무총리실, 특허심판원, 그리고 김·장 법률사무소로 이어졌습니다. 여기에 서울대학교 계산통계학과에서의 이학사와 일본 국립정책대학원에서의 정책학 석사 과정에서 다져진 분석력과 정책적 시야가 더해져, 제도와 실무를 함께 이해하는 균형 잡힌 전문성으로 이어지고 있습니다.",
+        en: "His career, which began at the Korean Intellectual Property Office in 1995, has continued through WIPO, the Prime Minister's Office, the Intellectual Property Tribunal, and Kim & Chang. That professional path is complemented by academic training in computational statistics at Seoul National University and public policy at Japan's National Graduate Institute for Policy Studies, reinforcing a perspective that connects legal systems, policy, and practice.",
       },
     ],
     office: {
@@ -186,8 +186,8 @@ export const profileData = {
       {
         year: "1993",
         item: {
-          ko: "서울대학교 자연대학 이학사",
-          en: "Seoul National University, B.A. in Computer Science",
+          ko: "서울대학교 계산통계학과 이학사",
+          en: "Seoul National University, B.S. in Computational Statistics",
         },
       },
     ],
@@ -342,7 +342,7 @@ export const profileData = {
   sectionCopy: {
     about: {
       eyebrow: { ko: "Overview", en: "Overview" },
-      title: { ko: "공개 이력을 바탕으로 정리한 소개", en: "A curated introduction built from public records" },
+      title: { ko: "소개", en: "About" },
     },
     expertise: {
       eyebrow: { ko: "Focus", en: "Focus" },
