@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ship"
+  short_description: "Check release readiness and PR hygiene"
+  default_prompt: "Use $ship to verify release readiness, missing docs, test coverage, and PR notes before shipping."

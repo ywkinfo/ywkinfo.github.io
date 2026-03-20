@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Product Review"
+  short_description: "Pressure-test scope, user value, and sequencing"
+  default_prompt: "Use $plan-product-review to review the feature scope, user value, risks, and priorities before implementation."

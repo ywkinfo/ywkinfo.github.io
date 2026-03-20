@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA"
+  short_description: "Build manual checks and regression coverage"
+  default_prompt: "Use $qa to produce a manual QA plan, regression checks, and debugging signals for this change."

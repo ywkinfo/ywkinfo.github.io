@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review"
+  short_description: "Find behavioral regressions before merge"
+  default_prompt: "Use $review to inspect the diff for bugs, operational risks, and missing tests before merge."

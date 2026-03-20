@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan Engineering Review"
+  short_description: "Lock architecture, risks, and test strategy"
+  default_prompt: "Use $plan-eng-review to review architecture, data flow, edge cases, and the test plan before coding."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Office Hours"
+  short_description: "Reframe unclear product or engineering asks"
+  default_prompt: "Use $office-hours to restate the problem, expose assumptions, and suggest the next best path."

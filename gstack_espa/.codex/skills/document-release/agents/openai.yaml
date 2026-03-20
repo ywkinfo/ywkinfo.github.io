@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Release"
+  short_description: "Sync docs and READMEs to shipped changes"
+  default_prompt: "Use $document-release to update README, setup steps, and release docs so they match the shipped diff."
