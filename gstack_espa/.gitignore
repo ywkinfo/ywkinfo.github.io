@@ -2,3 +2,5 @@ node_modules
 dist
 coverage
 .codex_tmp_app
+.env.local
+.env.*.local

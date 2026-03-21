@@ -1,7 +1,19 @@
-import { startTransition, useState, type ChangeEvent, type FormEvent } from 'react'
+import {
+  startTransition,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import type { CreateEntryInput, SaveEntryResult } from '../types'
 import { useStudy } from '../context/StudyContext'
 import { parseTags } from '../lib/validation'
+import {
+  mergeWordAssistSuggestion,
+  needsWordAssist,
+  requestWordAssist,
+} from '../lib/wordAssist'
 
 interface EntryFormState {
   spanish: string
@@ -68,7 +80,7 @@ interface EntryFormProps {
   editingItemExists: boolean
   initialForm: EntryFormState
   navigateToDeck: () => void
-  onSave: (input: { exampleSentence?: string; meaningKo: string; notes?: string; spanish: string; tags?: string[] }, editingId?: string) => Promise<{ message?: string; ok: boolean }>
+  onSave: (input: CreateEntryInput, editingId?: string) => Promise<SaveEntryResult>
 }
 
 function EntryForm({
@@ -79,8 +91,13 @@ function EntryForm({
   onSave,
 }: EntryFormProps) {
   const [form, setForm] = useState<EntryFormState>(initialForm)
+  const [assistMessage, setAssistMessage] = useState<string | null>(null)
+  const [isAutofilling, setIsAutofilling] = useState(false)
+  const [isRefreshingExample, setIsRefreshingExample] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [lastAutofilledSpanish, setLastAutofilledSpanish] = useState<string | null>(null)
+  const aiRequestInFlightRef = useRef(false)
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = event.target
@@ -89,20 +106,135 @@ function EntryForm({
       ...current,
       [name]: value,
     }))
+
+    if (name === 'spanish') {
+      setLastAutofilledSpanish(null)
+    }
+  }
+
+  async function requestSuggestionForSpanish(
+    nextSpanish: string,
+    messages: { loading: string; success: string },
+  ) {
+    if (aiRequestInFlightRef.current) {
+      return null
+    }
+
+    aiRequestInFlightRef.current = true
+    setAssistMessage(messages.loading)
+
+    try {
+      const suggestion = await requestWordAssist(nextSpanish)
+
+      setAssistMessage(messages.success)
+
+      return suggestion
+    } catch (error) {
+      setAssistMessage(
+        error instanceof Error
+          ? error.message
+          : 'AI 자동 작성 중 오류가 발생했습니다.',
+      )
+
+      return null
+    } finally {
+      aiRequestInFlightRef.current = false
+    }
+  }
+
+  async function autofillMissingFields(options?: { force?: boolean }) {
+    const currentForm = form
+    const nextSpanish = currentForm.spanish.trim()
+    const spanishKey = nextSpanish.toLowerCase()
+
+    if (!nextSpanish) {
+      return null
+    }
+
+    if (!options?.force && !needsWordAssist(currentForm)) {
+      return null
+    }
+
+    if (!options?.force && lastAutofilledSpanish === spanishKey) {
+      return null
+    }
+
+    setIsAutofilling(true)
+    const suggestion = await requestSuggestionForSpanish(nextSpanish, {
+      loading: 'AI가 뜻, 예문, 태그를 작성하는 중입니다...',
+      success: 'AI가 뜻, 예문, 태그를 자동으로 채웠습니다.',
+    })
+
+    if (!suggestion) {
+      setIsAutofilling(false)
+      return null
+    }
+
+    const mergedForm = mergeWordAssistSuggestion(currentForm, suggestion)
+
+    setForm((current) =>
+      current.spanish.trim().toLowerCase() === spanishKey
+        ? mergeWordAssistSuggestion(current, suggestion)
+        : current,
+    )
+    setLastAutofilledSpanish(spanishKey)
+    setIsAutofilling(false)
+
+    return mergedForm
+  }
+
+  async function regenerateExampleSentence() {
+    const nextSpanish = form.spanish.trim()
+    const spanishKey = nextSpanish.toLowerCase()
+
+    if (!nextSpanish) {
+      setAssistMessage('예문을 다시 만들려면 먼저 스페인어 단어를 입력해 주세요.')
+      return
+    }
+
+    setIsRefreshingExample(true)
+    const suggestion = await requestSuggestionForSpanish(nextSpanish, {
+      loading: 'AI가 예문을 다시 작성하는 중입니다...',
+      success: 'AI가 예문을 새로 작성했습니다.',
+    })
+
+    if (!suggestion) {
+      setIsRefreshingExample(false)
+      return
+    }
+
+    setForm((current) =>
+      current.spanish.trim().toLowerCase() === spanishKey
+        ? {
+            ...current,
+            exampleSentence: suggestion.exampleSentence,
+          }
+        : current,
+    )
+    setIsRefreshingExample(false)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsSaving(true)
     setMessage(null)
+    let nextForm = form
+
+    if (needsWordAssist(form)) {
+      const autofilledForm = await autofillMissingFields({ force: true })
+
+      if (autofilledForm) {
+        nextForm = autofilledForm
+      }
+    }
 
     const result = await onSave(
       {
-        spanish: form.spanish,
-        meaningKo: form.meaningKo,
-        exampleSentence: form.exampleSentence,
-        notes: form.notes,
-        tags: parseTags(form.tagsText),
+        spanish: nextForm.spanish,
+        meaningKo: nextForm.meaningKo,
+        exampleSentence: nextForm.exampleSentence,
+        notes: nextForm.notes,
+        tags: parseTags(nextForm.tagsText),
       },
       editingId,
     )
@@ -120,15 +252,34 @@ function EntryForm({
   return (
     <form className="surface-card form-card" onSubmit={handleSubmit}>
       <label className="field">
-        <span>스페인어 단어</span>
+        <div className="field-header">
+          <span>스페인어 단어</span>
+          <button
+            className="button button-secondary button-compact"
+            disabled={isAutofilling || isRefreshingExample || !form.spanish.trim()}
+            onClick={() => {
+              void autofillMissingFields({ force: true })
+            }}
+            type="button"
+          >
+            {isAutofilling ? 'AI 작성 중...' : 'AI 채우기'}
+          </button>
+        </div>
         <input
           aria-label="스페인어 단어"
           autoFocus
+          className="vocab-entry-input"
           name="spanish"
           placeholder="예: compartir"
           value={form.spanish}
+          onBlur={() => {
+            void autofillMissingFields()
+          }}
           onChange={handleChange}
         />
+        <p className="meta-label">
+          스페인어 단어만 입력하고 포커스를 옮기면 AI가 뜻, 예문, 태그를 채웁니다.
+        </p>
       </label>
 
       <label className="field">
@@ -143,7 +294,19 @@ function EntryForm({
       </label>
 
       <label className="field">
-        <span>예문</span>
+        <div className="field-header">
+          <span>예문</span>
+          <button
+            className="button button-secondary button-compact"
+            disabled={isAutofilling || isRefreshingExample || !form.spanish.trim()}
+            onClick={() => {
+              void regenerateExampleSentence()
+            }}
+            type="button"
+          >
+            {isRefreshingExample ? '예문 생성 중...' : 'AI 채우기'}
+          </button>
+        </div>
         <textarea
           name="exampleSentence"
           placeholder="예: Quiero compartir este cafe contigo."
@@ -178,6 +341,7 @@ function EntryForm({
         <p className="inline-message inline-error">수정할 단어를 찾을 수 없습니다.</p>
       ) : null}
 
+      {assistMessage ? <p className="inline-message">{assistMessage}</p> : null}
       {message ? <p className="inline-message inline-error">{message}</p> : null}
 
       <div className="action-row">

@@ -81,9 +81,13 @@ export function ReviewPage() {
             <div className="stack-list">
               {dueEntries.slice(0, 4).map((item) => (
                 <article className="list-item" key={item.entry.id}>
-                  <div>
-                    <strong>{item.entry.spanish}</strong>
-                    <p>{item.entry.meaningKo}</p>
+                  <div className="vocab-pair">
+                    <strong className="vocab-latin vocab-latin-sm" lang="es">
+                      {item.entry.spanish}
+                    </strong>
+                    <p className="vocab-korean" lang="ko">
+                      {item.entry.meaningKo}
+                    </p>
                   </div>
                   <span className="status-pill is-due">
                     {formatRelativeDue(item.review.dueAt)}
@@ -145,12 +149,18 @@ function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
         type="button"
       >
         <p className="study-card-label">{isAnswerVisible ? '뜻과 메모' : '스페인어 단어'}</p>
-        <h2>{currentItem.entry.spanish}</h2>
+        <h2 className="study-card-term vocab-latin vocab-latin-xl" lang="es">
+          {currentItem.entry.spanish}
+        </h2>
         {isAnswerVisible ? (
           <div className="study-card-back">
-            <strong>{currentItem.entry.meaningKo}</strong>
+            <strong className="vocab-korean vocab-korean-strong" lang="ko">
+              {currentItem.entry.meaningKo}
+            </strong>
             {currentItem.entry.exampleSentence ? (
-              <p>{currentItem.entry.exampleSentence}</p>
+              <p className="sentence-latin" lang="es">
+                {currentItem.entry.exampleSentence}
+              </p>
             ) : null}
             {currentItem.entry.notes ? <p>{currentItem.entry.notes}</p> : null}
           </div>

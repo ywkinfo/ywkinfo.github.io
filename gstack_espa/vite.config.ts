@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { geminiAutofillPlugin } from './server/geminiProxy'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), geminiAutofillPlugin()],
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

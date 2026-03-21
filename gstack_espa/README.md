@@ -5,6 +5,7 @@
 ## Current MVP
 
 - 수동 입력 기반 단어 추가와 수정
+- 스페인어 단어만 입력했을 때 Gemini로 `뜻 + 예문 + 태그` 자동 채우기
 - `IndexedDB` 로컬 저장
 - `again / good / easy` 3단계 평점 기반 단순 SRS 스케줄러
 - 오늘 due 카드 복습 세션
@@ -30,6 +31,16 @@
 - `Vitest` + Testing Library
 
 ## Quick Start
+
+먼저 로컬 전용 Gemini 키를 설정합니다:
+
+```bash
+cp .env.example .env.local
+```
+
+`.env.local`에 `GEMINI_API_KEY`를 넣고, 필요하면 `GEMINI_MODEL`도 조정하세요.
+
+그다음 앱을 실행합니다:
 
 ```bash
 npm install
@@ -67,6 +78,8 @@ npm run build
 - 새 카드의 `again`은 10분 뒤 다시 due 상태가 됩니다.
 - 첫 `good`은 1일, 첫 `easy`는 7일 뒤로 넘깁니다.
 - 모든 학습 데이터는 현재 브라우저에만 저장됩니다.
+- Gemini 자동 채우기는 로컬 Vite 프록시(`/api/spanish-word-autofill`)를 통해 호출하므로 API 키를 클라이언트 번들에 직접 넣지 않습니다.
+- 현재 AI 자동 채우기 범위는 `한국어 뜻`, `예문`, `태그`이고 `메모`는 사용자가 직접 입력합니다.
 
 ## Repo Workflow Notes
 

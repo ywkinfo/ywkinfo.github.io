@@ -73,9 +73,13 @@ export function DeckPage() {
         {filteredDeck.map((item) => (
           <article className="surface-card list-card" key={item.entry.id}>
             <div className="list-card-header">
-              <div>
-                <p className="eyebrow small-eyebrow">{item.entry.spanish}</p>
-                <h2>{item.entry.meaningKo}</h2>
+              <div className="card-term-stack">
+                <h2 className="vocab-latin vocab-latin-lg" lang="es">
+                  {item.entry.spanish}
+                </h2>
+                <p className="vocab-korean card-meaning" lang="ko">
+                  {item.entry.meaningKo}
+                </p>
               </div>
               <span
                 className={
@@ -91,7 +95,9 @@ export function DeckPage() {
             </div>
 
             {item.entry.exampleSentence ? (
-              <p className="quote-copy">{item.entry.exampleSentence}</p>
+              <p className="quote-copy sentence-latin" lang="es">
+                {item.entry.exampleSentence}
+              </p>
             ) : null}
 
             {item.entry.notes ? <p className="body-copy">{item.entry.notes}</p> : null}

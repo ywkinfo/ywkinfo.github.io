@@ -86,9 +86,13 @@ export function HomePage() {
           <div className="stack-list">
             {dueEntries.slice(0, 3).map((item) => (
               <article className="list-item" key={item.entry.id}>
-                <div>
-                  <strong>{item.entry.spanish}</strong>
-                  <p>{item.entry.meaningKo}</p>
+                <div className="vocab-pair">
+                  <strong className="vocab-latin vocab-latin-sm" lang="es">
+                    {item.entry.spanish}
+                  </strong>
+                  <p className="vocab-korean" lang="ko">
+                    {item.entry.meaningKo}
+                  </p>
                 </div>
                 <span className="status-pill is-due">
                   {formatRelativeDue(item.review.dueAt)}
@@ -116,9 +120,13 @@ export function HomePage() {
         <div className="stack-list">
           {newestEntries.map((item) => (
             <article className="list-item" key={item.entry.id}>
-              <div>
-                <strong>{item.entry.spanish}</strong>
-                <p>{item.entry.meaningKo}</p>
+              <div className="vocab-pair">
+                <strong className="vocab-latin vocab-latin-sm" lang="es">
+                  {item.entry.spanish}
+                </strong>
+                <p className="vocab-korean" lang="ko">
+                  {item.entry.meaningKo}
+                </p>
               </div>
               <span className="meta-label">{formatDateTime(item.entry.createdAt)}</span>
             </article>
