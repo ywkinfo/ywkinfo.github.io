@@ -62,10 +62,16 @@ export interface SessionSummary {
   ratingCounts: Record<StudyRating, number>
 }
 
-export interface ExportBundle {
+export interface StorageExportBundle {
   exportedAt: string
   entries: VocabEntry[]
   reviews: ReviewState[]
+}
+
+export interface BackupBundle extends StorageExportBundle {
+  schemaVersion: number
+  session: ReviewSession | null
+  lastSummary: SessionSummary | null
 }
 
 export interface SaveEntryResult {
@@ -81,9 +87,11 @@ export interface AnswerResult {
 export interface StudyRepository {
   createEntry(input: CreateEntryInput): Promise<VocabEntry>
   updateEntry(entry: VocabEntry): Promise<VocabEntry>
+  deleteEntry(id: string): Promise<void>
   listEntries(): Promise<DeckEntry[]>
   getDueEntries(at?: string): Promise<DeckEntry[]>
   recordReview(entryId: string, rating: StudyRating, reviewedAt?: string): Promise<ReviewState>
   getStats(at?: string): Promise<StudyStats>
-  exportData(): Promise<ExportBundle>
+  exportData(): Promise<StorageExportBundle>
+  importData(bundle: StorageExportBundle): Promise<void>
 }

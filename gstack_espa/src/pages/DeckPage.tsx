@@ -5,8 +5,10 @@ import { useStudy } from '../context/StudyContext'
 import { formatDateTime, formatRelativeDue } from '../lib/format'
 
 export function DeckPage() {
-  const { deck, isLoading } = useStudy()
+  const { deck, deleteEntry, isLoading } = useStudy()
   const [query, setQuery] = useState('')
+  const [message, setMessage] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const deferredQuery = useDeferredValue(query.trim().toLowerCase())
 
   if (!deck.length && !isLoading) {
@@ -46,6 +48,19 @@ export function DeckPage() {
     setQuery(event.target.value)
   }
 
+  async function handleDelete(entryId: string, spanish: string) {
+    const isConfirmed = window.confirm(`"${spanish}" 카드를 삭제할까요?`)
+
+    if (!isConfirmed) {
+      return
+    }
+
+    setDeletingId(entryId)
+    const result = await deleteEntry(entryId)
+    setDeletingId(null)
+    setMessage(result.message ?? (result.ok ? '카드를 삭제했습니다.' : '카드 삭제에 실패했습니다.'))
+  }
+
   return (
     <div className="page-stack">
       <section className="surface-card section-card">
@@ -67,6 +82,7 @@ export function DeckPage() {
             새 단어
           </Link>
         </div>
+        {message ? <p className="inline-message">{message}</p> : null}
       </section>
 
       <section className="stack-list">
@@ -114,9 +130,21 @@ export function DeckPage() {
 
             <div className="list-card-footer">
               <span className="meta-label">생성 {formatDateTime(item.entry.createdAt)}</span>
-              <Link className="text-link" to={`/add?edit=${item.entry.id}`}>
-                편집
-              </Link>
+              <div className="action-row">
+                <Link className="text-link" to={`/add?edit=${item.entry.id}`}>
+                  편집
+                </Link>
+                <button
+                  className="text-link text-link-danger"
+                  disabled={deletingId === item.entry.id}
+                  onClick={() => {
+                    void handleDelete(item.entry.id, item.entry.spanish)
+                  }}
+                  type="button"
+                >
+                  {deletingId === item.entry.id ? '삭제 중...' : '삭제'}
+                </button>
+              </div>
             </div>
           </article>
         ))}

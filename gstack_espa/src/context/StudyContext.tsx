@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type {
   AnswerResult,
+  BackupBundle,
   CreateEntryInput,
   DeckEntry,
   ReviewSession,
@@ -22,12 +23,14 @@ import type {
 } from '../types'
 import { toUserMessage } from '../lib/errors'
 import {
+  clearStoredSummary,
   clearStoredSession,
   loadStoredSession,
   loadStoredSummary,
   saveStoredSession,
   saveStoredSummary,
 } from '../lib/sessionStorage'
+import { createBackupBundle, sanitizeImportedSession } from '../lib/backup'
 import { buildStats, getDueDeckEntries, summarizeSession } from '../lib/stats'
 import { studyRepository } from '../lib/storage'
 
@@ -40,9 +43,11 @@ interface StudyContextValue {
   lastSummary: SessionSummary | null
   stats: ReturnType<typeof buildStats>
   saveEntry: (input: CreateEntryInput, editingId?: string) => Promise<SaveEntryResult>
+  deleteEntry: (entryId: string) => Promise<SaveEntryResult>
   startSession: () => ReviewSession | null
   answerCurrentCard: (rating: StudyRating) => Promise<AnswerResult>
-  exportData: StudyRepository['exportData']
+  exportData: () => Promise<BackupBundle>
+  importData: (bundle: BackupBundle) => Promise<SaveEntryResult>
   clearSession: () => void
 }
 
@@ -95,7 +100,10 @@ export function StudyProvider({
   useEffect(() => {
     if (lastSummary) {
       saveStoredSummary(lastSummary)
+      return
     }
+
+    clearStoredSummary()
   }, [lastSummary])
 
   async function saveEntry(
@@ -127,6 +135,35 @@ export function StudyProvider({
 
       return {
         ok: true,
+      }
+    } catch (nextError) {
+      return {
+        ok: false,
+        message: toUserMessage(nextError),
+      }
+    }
+  }
+
+  async function deleteEntry(entryId: string): Promise<SaveEntryResult> {
+    try {
+      await repository.deleteEntry(entryId)
+      const isSessionAffected = Boolean(
+        session &&
+          (session.remainingIds.includes(entryId) ||
+            session.answers.some((answer) => answer.entryId === entryId)),
+      )
+
+      if (isSessionAffected) {
+        setSession(null)
+      }
+
+      await hydrate()
+
+      return {
+        ok: true,
+        message: isSessionAffected
+          ? '카드를 삭제했고, 진행 중 세션은 안전하게 비웠습니다.'
+          : '카드를 삭제했습니다.',
       }
     } catch (nextError) {
       return {
@@ -213,6 +250,38 @@ export function StudyProvider({
     setSession(null)
   }
 
+  async function exportData() {
+    const bundle = await repository.exportData()
+
+    return createBackupBundle(bundle, session, lastSummary)
+  }
+
+  async function importData(bundle: BackupBundle): Promise<SaveEntryResult> {
+    try {
+      await repository.importData(bundle)
+      const restoredSession = sanitizeImportedSession(bundle.session, bundle.entries)
+
+      startTransition(() => {
+        setSession(restoredSession)
+        setLastSummary(bundle.lastSummary)
+      })
+
+      await hydrate()
+
+      return {
+        ok: true,
+        message: restoredSession
+          ? '백업을 불러왔습니다. 진행 중 세션과 마지막 요약도 함께 복원했습니다.'
+          : '백업을 불러왔습니다.',
+      }
+    } catch (nextError) {
+      return {
+        ok: false,
+        message: toUserMessage(nextError),
+      }
+    }
+  }
+
   const dueEntries = getDueDeckEntries(deck)
 
   const value: StudyContextValue = {
@@ -224,9 +293,11 @@ export function StudyProvider({
     lastSummary,
     stats: buildStats(deck),
     saveEntry,
+    deleteEntry,
     startSession,
     answerCurrentCard,
-    exportData: () => repository.exportData(),
+    exportData,
+    importData,
     clearSession,
   }
 

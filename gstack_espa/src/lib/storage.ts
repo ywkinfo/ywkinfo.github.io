@@ -3,8 +3,8 @@ import type { DBSchema, IDBPDatabase } from 'idb'
 import type {
   CreateEntryInput,
   DeckEntry,
-  ExportBundle,
   ReviewState,
+  StorageExportBundle,
   StudyRating,
   StudyRepository,
   StudyStats,
@@ -77,6 +77,44 @@ function joinDeck(entries: VocabEntry[], reviews: ReviewState[]) {
   return sortDeckEntries(joined)
 }
 
+function normalizeImportedEntries(entries: VocabEntry[]) {
+  const nextEntries: VocabEntry[] = []
+  const seenIds = new Set<string>()
+
+  for (const entry of entries) {
+    if (seenIds.has(entry.id)) {
+      throw new Error('백업 파일에 중복된 카드 ID가 있습니다.')
+    }
+
+    const cleanInput = sanitizeEntryInput(entry)
+    validateEntryInput(cleanInput)
+    assertNoDuplicateEntry(cleanInput, nextEntries)
+
+    nextEntries.push({
+      id: entry.id,
+      createdAt: entry.createdAt,
+      ...cleanInput,
+    })
+    seenIds.add(entry.id)
+  }
+
+  return nextEntries
+}
+
+function normalizeImportedReviews(entries: VocabEntry[], reviews: ReviewState[]) {
+  const reviewById = new Map<string, ReviewState>()
+
+  for (const review of reviews) {
+    if (reviewById.has(review.entryId)) {
+      throw new Error('백업 파일에 중복된 복습 상태가 있습니다.')
+    }
+
+    reviewById.set(review.entryId, review)
+  }
+
+  return entries.map((entry) => reviewById.get(entry.id) ?? createInitialReviewState(entry.id, entry.createdAt))
+}
+
 export class IndexedDbStudyRepository implements StudyRepository {
   async createEntry(input: CreateEntryInput) {
     const db = await getDb()
@@ -125,6 +163,17 @@ export class IndexedDbStudyRepository implements StudyRepository {
     return nextEntry
   }
 
+  async deleteEntry(id: string) {
+    const db = await getDb()
+    const transaction = db.transaction(['entries', 'reviews'], 'readwrite')
+
+    await Promise.all([
+      transaction.objectStore('entries').delete(id),
+      transaction.objectStore('reviews').delete(id),
+      transaction.done,
+    ])
+  }
+
   async listEntries() {
     const db = await getDb()
     const [entries, reviews] = await Promise.all([db.getAll('entries'), db.getAll('reviews')])
@@ -158,7 +207,7 @@ export class IndexedDbStudyRepository implements StudyRepository {
     return buildStats(deck, new Date(at))
   }
 
-  async exportData(): Promise<ExportBundle> {
+  async exportData(): Promise<StorageExportBundle> {
     const db = await getDb()
     const [entries, reviews] = await Promise.all([db.getAll('entries'), db.getAll('reviews')])
 
@@ -167,6 +216,27 @@ export class IndexedDbStudyRepository implements StudyRepository {
       entries,
       reviews,
     }
+  }
+
+  async importData(bundle: StorageExportBundle) {
+    const db = await getDb()
+    const entries = normalizeImportedEntries(bundle.entries)
+    const reviews = normalizeImportedReviews(entries, bundle.reviews)
+    const transaction = db.transaction(['entries', 'reviews'], 'readwrite')
+    const entriesStore = transaction.objectStore('entries')
+    const reviewsStore = transaction.objectStore('reviews')
+
+    await Promise.all([entriesStore.clear(), reviewsStore.clear()])
+
+    for (const entry of entries) {
+      await entriesStore.put(entry)
+    }
+
+    for (const review of reviews) {
+      await reviewsStore.put(review)
+    }
+
+    await transaction.done
   }
 }
 

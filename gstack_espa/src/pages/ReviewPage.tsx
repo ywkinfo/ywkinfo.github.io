@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react'
+import { startTransition, useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { EmptyState } from '../components/EmptyState'
 import { useStudy } from '../context/StudyContext'
@@ -140,10 +140,18 @@ interface ReviewCardProps {
 
 function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false)
+  const answerId = useId()
 
   return (
     <>
       <button
+        aria-controls={answerId}
+        aria-expanded={isAnswerVisible}
+        aria-label={
+          isAnswerVisible
+            ? `뜻과 메모 ${currentItem.entry.spanish}`
+            : `스페인어 단어 ${currentItem.entry.spanish} 카드를 눌러 뜻 보기`
+        }
         className={isAnswerVisible ? 'study-card is-flipped' : 'study-card'}
         onClick={() => setIsAnswerVisible((current) => !current)}
         type="button"
@@ -153,7 +161,7 @@ function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
           {currentItem.entry.spanish}
         </h2>
         {isAnswerVisible ? (
-          <div className="study-card-back">
+          <div className="study-card-back" id={answerId}>
             <strong className="vocab-korean vocab-korean-strong" lang="ko">
               {currentItem.entry.meaningKo}
             </strong>
@@ -175,6 +183,7 @@ function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
         </p>
         <div className="rating-grid">
           <button
+            aria-label="Again, 10분 뒤 다시 보기"
             className="button button-danger"
             disabled={!isAnswerVisible || isSubmitting}
             onClick={() => onRating('again')}
@@ -183,6 +192,7 @@ function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
             Again
           </button>
           <button
+            aria-label="Good, 다음 간격으로 넘기기"
             className="button button-secondary"
             disabled={!isAnswerVisible || isSubmitting}
             onClick={() => onRating('good')}
@@ -191,6 +201,7 @@ function ReviewCard({ currentItem, isSubmitting, onRating }: ReviewCardProps) {
             Good
           </button>
           <button
+            aria-label="Easy, 더 긴 간격으로 넘기기"
             className="button button-primary"
             disabled={!isAnswerVisible || isSubmitting}
             onClick={() => onRating('easy')}

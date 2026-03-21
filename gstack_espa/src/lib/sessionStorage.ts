@@ -52,3 +52,11 @@ export function loadStoredSummary() {
 export function saveStoredSummary(summary: SessionSummary) {
   writeJson(SUMMARY_STORAGE_KEY, summary)
 }
+
+export function clearStoredSummary() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.removeItem(SUMMARY_STORAGE_KEY)
+}
