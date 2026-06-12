@@ -69,11 +69,10 @@ export const profileData = {
   },
   heroStats: [
     {
-      valueKey: "yearsExperience",
-      value: "31+",
+      value: "Since 1995",
       label: {
-        ko: "IP 관련 경력 연차",
-        en: "Years across IP-related roles",
+        ko: "IP 관련 경력",
+        en: "Across IP-related roles",
       },
     },
     {

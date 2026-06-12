@@ -4,11 +4,22 @@ Independent bilingual profile site for Peter Won-Kil Yoon, built as a plain stat
 
 ## Structure
 
-- `index.html`: page shell and metadata
+- `index.html`: page shell, metadata, and prerendered Korean content
 - `assets/styles.css`: responsive styles and theme
-- `assets/app.js`: UI rendering and language toggle
+- `assets/render.js`: pure HTML templates shared by the browser and the prerender script
+- `assets/app.js`: language toggle and client-side rendering
 - `data/profile-data.js`: curated bilingual content
-- `.github/workflows/pages.yml`: GitHub Pages deployment workflow
+- `scripts/prerender.mjs`: bakes the Korean version into `index.html`
+- `.github/workflows/pages.yml`: GitHub Pages deployment workflow (deploys only the profile files)
+
+## Updating content
+
+Edit `data/profile-data.js`, then regenerate the static Korean content so the
+page stays readable without JavaScript:
+
+```bash
+node scripts/prerender.mjs
+```
 
 ## Local preview
 
